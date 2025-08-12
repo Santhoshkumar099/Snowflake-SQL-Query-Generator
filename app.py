@@ -69,34 +69,15 @@ TASK:
 @app.route('/generate-sql', methods=['POST'])
 def generate_sql():
     try:
-        if 'file' not in request.files:
-            return jsonify({"error": "No file part in the request"}), 400
+        # Get JSON data from request body
+        input_json = request.get_json()
 
-        file = request.files['file']
-
-        if file.filename == '':
-            return jsonify({"error": "No selected file"}), 400
-
-        if not file.filename.endswith('.json'):
-            return jsonify({"error": "Only .json files are allowed"}), 400
-
-        file_content = file.read()
-
-        if not file_content:
-            return jsonify({"error": "Uploaded file is empty"}), 400
-
-        try:
-            input_json = json.loads(file_content)
-
-        except json.JSONDecodeError as e:
-            return jsonify({
-                "error": "Invalid JSON format in the uploaded file",
-                "details": str(e)
-            }), 400
+        if not input_json:
+            return jsonify({"error": "Request body must contain valid JSON"}), 400
 
         payload = {
             "model": "domo.openai.gpt-4o-mini",
-            "input": system_instruction + "DOMO's MAGIC ETL JSON :" +json.dumps(input_json),
+            "input": system_instruction + "DOMO's MAGIC ETL JSON :" + json.dumps(input_json),
             "parameters": {
                 "temperature": 0.2
             }
@@ -143,7 +124,6 @@ def generate_sql():
                 "raw_output": response_content,
                 "details": str(e)
             }), 500
-
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
